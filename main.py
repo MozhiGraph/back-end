@@ -1,14 +1,51 @@
+from http import client
 from fastapi import FastAPI
 from pydantic import BaseModel
 from requests import post
 from dotenv import load_dotenv
 import os
+from telethon import TelegramClient
+from contextlib import asynccontextmanager
 
+for f in ["logos", ".users"]:
+    if not os.path.exists(f):
+        os.makedirs(f)
 load_dotenv()
 cloudflare_api_token = os.getenv("CLOUDFLARE_API_TOKEN")
 cloudflare_account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID")
+telegram_api_id = os.getenv("TELEGRAM_API_ID")
+telegram_api_hash = os.getenv("TELEGRAM_API_HASH")
 
-app = FastAPI()
+tg_client = TelegramClient(".users/u0", telegram_api_id, telegram_api_hash)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await tg_client.connect()
+    if not await tg_client.is_user_authorized():
+        phone = input("Enter your phone number: ")
+        await tg_client.send_code_request(phone)
+        code = input("Enter the code: ")
+        await tg_client.sign_in(phone, code)
+        print("Logged in successfully.")
+    else:
+        print("Already logged in.")
+    dialogs = await tg_client.get_dialogs()
+    for dialog in dialogs:
+        path = f"logos/{dialog.id}.jpg"
+        if not os.path.exists(path):
+            await tg_client.download_profile_photo(dialog, file=f"logos/{dialog.id}.jpg")
+    yield
+
+app = FastAPI(lifespan=lifespan)
+
+@app.get("/dialogs")
+async def get_dialogs():
+    dialogs = await tg_client.get_dialogs()
+    for dialog in dialogs:
+        path = f"logos/{dialog.id}.jpg"
+        if not os.path.exists(path):
+            await tg_client.download_profile_photo(dialog, file=f"logos/{dialog.id}.jpg")
+    return [{"id": dialog.id, "name": dialog.name} for dialog in dialogs]
 
 class TranslationRequest(BaseModel):
     text: str
