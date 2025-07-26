@@ -1,5 +1,5 @@
-from http import client
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from requests import post
 from dotenv import load_dotenv
@@ -47,6 +47,13 @@ async def get_dialogs():
             await tg_client.download_profile_photo(dialog, file=f"logos/{dialog.id}.jpg")
     return [{"id": dialog.id, "name": dialog.name} for dialog in dialogs]
 
+@app.get("/logos/{dialog_id}.jpg")
+async def get_logo(dialog_id: str):
+    path = f"logos/{dialog_id}.jpg"
+    if os.path.exists(path):
+        return FileResponse(path, media_type="image/jpeg")
+    return {"error": "Logo not found"}, 404
+
 class TranslationRequest(BaseModel):
     text: str
 
@@ -79,4 +86,4 @@ def translate_text(request: TranslationRequest) -> str:
         assert j["success"], f"Error: got {j} as response"
         return j["result"]["response"]
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e)}, 500
