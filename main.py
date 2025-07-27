@@ -63,6 +63,7 @@ async def get_chat(dialog_id: str):
                 {
                     "id": msg.id,
                     "senderId": msg.sender_id,
+                    "senderName": msg.sender.first_name + " " + (msg.sender.last_name or "") if msg.sender else "Unknown",
                     "text": msg.message,
                     "date": msg.date.isoformat()
                 } for msg in msgs
