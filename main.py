@@ -76,7 +76,7 @@ async def get_logo(dialog_id: str):
 async def get_chat(dialog_id: str):
     try:
         chat = await tg_client.get_entity(int(dialog_id))
-        msgs = await tg_client.get_messages(chat, limit=30)
+        msgs = await tg_client.get_messages(chat, limit=15)
         return [
                 {
                     "id": msg.id,
