@@ -54,6 +54,22 @@ async def get_logo(dialog_id: str):
         return FileResponse(path, media_type="image/jpeg")
     return {"error": "Logo not found"}, 404
 
+@app.get("/chat/{dialog_id}")
+async def get_chat(dialog_id: str):
+    try:
+        chat = await tg_client.get_entity(int(dialog_id))
+        msgs = await tg_client.get_messages(chat, limit=30)
+        return [
+                {
+                    "id": msg.id,
+                    "senderId": msg.sender_id,
+                    "text": msg.message,
+                    "date": msg.date.isoformat()
+                } for msg in msgs
+            ]
+    except Exception as e:
+        return {"error": str(e)}, 404
+
 class TranslationRequest(BaseModel):
     text: str
 
