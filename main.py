@@ -89,6 +89,25 @@ async def get_chat(dialog_id: str):
     except Exception as e:
         return {"error": str(e)}, 404
 
+class PostMessageRequest(BaseModel):
+    dialogId: int
+    message: str
+@app.post("/post-message")
+async def post_message(request: PostMessageRequest):
+    try:
+        print(request.dialogId, request.message)
+        chat = await tg_client.get_entity(int(request.dialogId))
+        msg = await tg_client.send_message(chat, request.message)
+        return {
+            "id": msg.id,
+            "senderId": msg.sender_id,
+            "senderName": msg.sender.first_name + " " + (msg.sender.last_name or "") if msg.sender else "Unknown",
+            "text": msg.message,
+            "date": msg.date.isoformat()
+        }
+    except Exception as e:
+        return {"error": str(e)}, 500
+
 class TranslationRequest(BaseModel):
     text: str
 
