@@ -110,9 +110,12 @@ async def post_message(request: PostMessageRequest):
 
 class TranslationRequest(BaseModel):
     text: str
+    to: str = "english"
 
 with open("to-eng-prompt.txt") as f:
     to_eng_prompt = f.read()
+with open("to-hindi-prompt.txt") as f:
+    to_hindi_prompt = f.read()
 
 @app.post("/translate")
 def translate_text(request: TranslationRequest) -> str:
@@ -127,7 +130,7 @@ def translate_text(request: TranslationRequest) -> str:
             "messages": [
                 {
                     "role": "system",
-                    "content": to_eng_prompt
+                    "content": to_hindi_prompt if request.to == "hindi" else to_eng_prompt
                 },
                 {
                     "role": "user",
