@@ -144,3 +144,11 @@ def translate_text(request: TranslationRequest) -> str:
         return j["result"]["response"]
     except Exception as e:
         return {"error": str(e)}, 500
+
+
+@app.get("/")
+async def root():
+    return FileResponse(f"{config['front-end-path']}/dist/index.html")
+@app.get("/assets/{asset}")
+async def serve_static(asset: str):
+    return FileResponse(f"{config['front-end-path']}/dist/assets/{asset}")
