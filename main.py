@@ -1,15 +1,25 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from requests import post
 from dotenv import load_dotenv
 import os
 from telethon import TelegramClient
 from contextlib import asynccontextmanager
+import json
 
 for f in ["logos", ".users"]:
     if not os.path.exists(f):
         os.makedirs(f)
+if not os.path.exists("config.json"):
+    with open("default-config.json") as f:
+        config = f.read()
+    with open("config.json", "w") as f:
+        f.write(config)
+with open("config.json") as f:
+    config = f.read()
+    config = json.loads(config)
 load_dotenv()
 cloudflare_api_token = os.getenv("CLOUDFLARE_API_TOKEN")
 cloudflare_account_id = os.getenv("CLOUDFLARE_ACCOUNT_ID")
@@ -37,6 +47,14 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+if config.get("dev"):
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 @app.get("/dialogs")
 async def get_dialogs():
